@@ -40,6 +40,8 @@ public class Device extends CordovaPlugin {
     private static final String AMAZON_PLATFORM = "amazon-fireos";
     private static final String AMAZON_DEVICE = "Amazon";
 
+    private static Boolean sIsProbablyRunningOnEmulator = null;
+
     /**
      * Constructor.
      */
@@ -167,8 +169,34 @@ public class Device extends CordovaPlugin {
     }
 
     public boolean isVirtual() {
-	return android.os.Build.FINGERPRINT.contains("generic") ||
-	    android.os.Build.PRODUCT.contains("sdk");
+	Boolean result = sIsProbablyRunningOnEmulator;
+        if (result != null)
+            return result;
+        // Android SDK emulator
+        result = (android.os.Build.FINGERPRINT.startsWith("google/sdk_gphone_")
+                && android.os.Build.FINGERPRINT.endsWith(":user/release-keys")
+                && android.os.Build.MANUFACTURER == "Google" && android.os.Build.PRODUCT.startsWith("sdk_gphone_") && android.os.Build.BRAND == "google"
+                && android.os.Build.MODEL.startsWith("sdk_gphone_"))
+                //
+                || android.os.Build.FINGERPRINT.startsWith("generic")
+                || android.os.Build.FINGERPRINT.startsWith("unknown")
+                || android.os.Build.MODEL.contains("google_sdk")
+                || android.os.Build.MODEL.contains("Emulator")
+                || android.os.Build.MODEL.contains("Android SDK built for x86")
+                //bluestacks
+                // || "QC_Reference_Phone" == android.os.Build.BOARD && !"Xiaomi".equals(android.os.Build.MANUFACTURER, ignoreCase = true) //bluestacks
+                || android.os.Build.MANUFACTURER.contains("Genymotion")
+                || android.os.Build.HOST.startsWith("Build") //MSI App Player
+                || android.os.Build.BRAND.startsWith("generic") && android.os.Build.DEVICE.startsWith("generic")
+                || android.os.Build.PRODUCT == "google_sdk"
+                || android.os.Build.PRODUCT.contains("vbox86p")
+                || android.os.Build.DEVICE.contains("vbox86p")
+                || android.os.Build.HARDWARE.contains("vbox86");
+
+                // another Android SDK emulator check
+                //|| android.os.SystemProperties.getProp("ro.kernel.qemu") == "1";
+        sIsProbablyRunningOnEmulator = result;
+        return result;
     }
 
 }
